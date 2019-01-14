@@ -1,0 +1,89 @@
+MicroserviceJavainusePublishSpringCloudBus
+
+Spring Cloud Tutorial - Publish Events Using Spring Cloud Bus
+
+In a previous tutorial we had seen how with the Spring Cloud Config Server(MicroserviceJavainuseConfigGit) we have a central place to manage external properties for applications across all environments. We had stored the properties in GIT and used the same in our modules using Spring Cloud Config.
+
+All the modules/API that are to be refreshed will be connected to a single Message broker.
+
+Need for Spring Cloud Bus
+
+Now consider the scenario that we have multiple applications reading the properties using the Spring Cloud Config and the Spring Cloud Config which  in turn reads these properties from GIT.
+Consider the below example where multiple employee producer modules are getting the property for Eureka Registration from Employee Config Module.
+
+What will happen if suppose the eureka registration property in GIT changes to point to another Eureka server. In such a scenario we will have to restart the services to get the updated properties.
+There is another way of using Actuator Endpoint /refresh. But we will have to individually call this url for each of the modules.
+For example if Employee Producer1 is deployed on port 8080 then call http://localhost:8080/refresh. Similarly for Employee Producer2 http://localhost:8081/refresh and so on. This is again cumbersome. This is where Spring Cloud Bus comes into picture.
+
+The Spring Cloud Bus provides feature to refresh configurations across multiple instances. So in above example if we refresh for Employee Producer1, then it will automatically refresh for all other required modules. This is particularly useful if we are having multiple microservice up and running. This is achieved by connecting all microservices to a single message broker(rabbitmq). Whenever an instance is refreshed, this event is subscribed to all the microservices listening to this broker and they also get refreshed. The refresh to any single instance can be made by using the endpoint /bus/refresh
+
+We will modifying the code we developed in Spring Cloud Config using GIT example(MicroserviceJavainuseConfigGit)
+
+Changes for employee-producer module -
+Once you have imported the employee-producer module in eclipse, copy and create a similar employee producer module which will run on port 8081. So we will have employee-producer1 and employee-producer2 modules running on ports 8092 and 8081 respectively. Next for both these modules make the following changes.
+Add Actuator support
+Add spring-cloud-starter-bus-amqp dependencies
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+Also in each module add the following property to disable spring actuator security -
+management.security.enabled=false
+
+Changes for employee-config module -
+For this module make the following changes
+Add Actuator support
+Add spring-cloud-starter-bus-amqp dependencies
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+Also in each module add the following property to disable spring actuator security -
+management.security.enabled=false
+
+Changes for employee-consumer module -
+Once you have imported the employee-consumer module in eclipse, copy and create a similar employee consumer module which will run on port 8083. So we will have employee-consumer1 and employee-consumer2 modules running on ports 8091 and 8083 respectively. Next for both these modules make the following changes.
+Add Actuator support
+Add spring-cloud-starter-bus-amqp dependencies
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+Also in each module add the following property to disable spring actuator security -
+management.security.enabled=false
+
+Changes for employee-eureka-server module -
+Once you have imported the employee-eureka-server module in eclipse, copy and create a similar employee-eureka-server which will run on port 8762. So we will have employee-eureka-server1 and employee-eureka-server2 modules running on ports 8761 and 8762 respectively.
+
+We are done with the changes. Start RabbitMQ as specified in this Getting Started with RabbitMQ Tutorial(SpringBootJavainuseRabbitMQ). Next start the modules in the following sequence -
+employee-config
+employee-server1
+employee-server2
+employee-producer1
+employee-producer2
+
+Login to Rabbitmq, click on Exchange and see "springCloudBus" gets created. Go to Queues, we can see queues also got created.
+http://localhost:8761/ -> all services registered
+http://localhost:8762/ -> no services registered
+
+So we will be having the modules as follows. Since the global property for eureka service registration specifies eureka server running on port 8761 so this will be where both employee producer and consumer modules will be registered. 
+We can see employee producer modules are registered at eureka server on port 8761.
+
+
+Now modify this global property to point to eureka server running on 8762. and call a bus/refresh(POST -> localhost:8888/bus/refresh) call on any one module among employee producer1,employee producer2,employee consumer1,employee consumer2 and employee config.
+http://localhost:8762/ -> all services registered
+We can see employee producer modules are registered at eureka server on port 8762.
+
+

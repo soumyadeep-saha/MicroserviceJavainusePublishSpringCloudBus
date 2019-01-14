@@ -1,0 +1,47 @@
+MicroserviceJavainuseConfigGit
+
+Spring Cloud Config Example Using GIT Repo
+
+Input is MicroserviceJavainuseConfigLocal
+
+The steps we will be following for this tutorial will be-
+Creating a Git Project. Creating the application.properties in this project
+Modifying the employee-config-server module we created previously to use the application.properties from the Git Repo instead of Native files.
+
+Configure the Git Repo 
+1. Got to GitHub(https://github.com/) 
+If already have an account login or else SignUp.
+2. Create a new repository named employee-config-server.
+3. Finally create anew file named application.properties, copy the global properties like Eureka url and commit this file.
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka
+
+Next we will modify the employee-config-server module we created previously.
+1. From the src/main/resources/application.properties remove the native property and add the Git project url we just created as follows-
+server.port=8888
+spring.cloud.config.server.git.uri=https://github.com/soumyadeep-saha/employee-config-server
+2. We can now delete the common-config folders as the global properties will be read from Git Rep
+
+Next start the modules in following sequence-
+employee-config-server
+eureka-server
+employee-producer
+
+On running the employee-producer we get the output as follows- 
+The employee-producer module gets the eureka properties from the employee-config-server module and starts successfully.
+
+Check http://localhost:8888/application/default -> it will fetch us all the global application properties
+
+Check if producer and consumer are registered in Eureka
+http://localhost:8761/
+
+Download Source Code
+Download it -
+Employee Config Server using Git
+Employee Producer With Config Server
+Eureka Server
+
+
+
+
+
+
